@@ -6,6 +6,9 @@ const BaseLayout = () => {
     const [state, send] = useMachine(BookingMachine)
 
     console.log('Nuestra maquina', state)
+    console.log('Matches true', state.matches('initial'));
+    console.log('Matches false', state.matches('tickets'));
+    console.log('can', state.can('FINISH'));
     return (
         <div>Hola</div>
     )
