@@ -10,8 +10,10 @@ const BookingMachine = createMachine({
             },
         },
         search: {
-            CONTINUE: 'passengers',
-            CANCEL: 'initial',
+            on: {
+                CONTINUE: 'passengers',
+                CANCEL: 'initial',
+            },
         },
         tickets: {
             on: {
