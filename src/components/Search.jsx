@@ -5,7 +5,7 @@ const Search = ({ send }) => {
     const [flight, setFlight] = useState('');
 
     const goToPassengers = () => {
-        send({ type: "CONTINUE" })
+        send({ type: "CONTINUE", selectedCountry: flight })
     }
 
     const handleSelectChange = (event) => {
