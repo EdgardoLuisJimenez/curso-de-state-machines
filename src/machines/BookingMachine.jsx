@@ -1,11 +1,44 @@
-import { assign, createMachine, log } from "xstate";
+import { assign, createMachine, fromPromise } from "xstate";
+import { fetchCountries } from "../utils/api";
+
+const fillCountries = {
+    initial: 'loading',
+    states: {
+        loading: {
+            invoke: {
+                id: 'getCountries',
+                src: fromPromise(() => fetchCountries()),
+                onDone: {
+                    target: 'success',
+                    actions: assign({
+                        countries: ({ event }) => event.output
+                    }),
+                },
+                onError: {
+                    target: 'failure',
+                    actions: assign({
+                        error: 'Fallo al request'
+                    })
+                }
+            }
+        },
+        success: {},
+        failure: {
+            on: {
+                RETRY: { target: 'loading' }
+            }
+        }
+    }
+}
 
 const BookingMachine = createMachine({
     id: 'Buy plane tickets',
     initial: 'initial',
     context: {
         passengers: [],
-        selectedCountry: ''
+        selectedCountry: '',
+        countries: [],
+        error: '',
     },
     states: {
         initial: {
@@ -25,8 +58,15 @@ const BookingMachine = createMachine({
                 },
                 CANCEL: 'initial',
             },
+            ...fillCountries
         },
         tickets: {
+            after: {
+                5000: {
+                    target: 'initial',
+                    actions: 'cleancontext',
+                },
+            },
             on: {
                 FINISH: 'initial',
             },
@@ -34,11 +74,14 @@ const BookingMachine = createMachine({
         passengers: {
             on: {
                 DONE: 'tickets',
-                CANCEL: 'initial',
+                CANCEL: {
+                    target: 'initial',
+                    actions: 'cleancontext',
+                },
                 ADD: {
                     target: 'passengers',
                     actions: assign(
-                        ({context, event}) => context.passengers.push(event.newPassenger)
+                        ({ context, event }) => context.passengers.push(event.newPassenger)
                     )
                 }
             },
@@ -47,9 +90,10 @@ const BookingMachine = createMachine({
 },
     {
         actions: {
-            imprimirInicio: () => console.log('Imprimir Inicio'),
-            imprimirEntrada: () => console.log('Imprimir entrada a search'),
-            imprimirSalida: () => console.log('Imprimir salida del search')
+            cleancontext: assign({
+                selectedCountry: '',
+                passengers: [],
+            })
         }
     }
 )
